@@ -73,10 +73,11 @@ return [
         'redis' => [
             'driver' => 'redis',
             'connection' => 'cache',
-            'expiration' => 120
         ],
 
     ],
+
+    'expiration_time' => 120,
 
     /*
     |--------------------------------------------------------------------------

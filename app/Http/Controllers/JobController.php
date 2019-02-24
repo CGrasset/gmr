@@ -2,16 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Job;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class JobController extends Controller
 {
-    private $expiration = 120;
+    private $expiration = Config::get('cache.expiration_time');
 
     // return available Job with highest priority
     public function index()
     {
+        // Get job from cache; set to cache if not found.
+        $job = Cache::tags('jobs')->rememberForever('jobs.nextAvailable', function (){
+            return Job::nextAvailable()->get();
+        });
+
+        return $job;
     }
 
     public function show($id)
@@ -27,6 +34,7 @@ class JobController extends Controller
     public function store(Request $request)
     {
         // Add user_id
+        // Create new job and save to cache
         $job = Job::create($request->all());
 
         // dispatch job!
