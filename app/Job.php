@@ -11,6 +11,6 @@ class Job extends Model
     {
         return $query->where('status', 'available')
                      ->orderBy('id ASC')
-                     ->limit(1);
+                     ->first();
     }
 }

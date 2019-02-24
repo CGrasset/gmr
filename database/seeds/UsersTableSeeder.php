@@ -1,5 +1,6 @@
 <?php
 
+use App\User;
 use Illuminate\Database\Seeder;
 
 class UsersTableSeeder extends Seeder
@@ -11,9 +12,6 @@ class UsersTableSeeder extends Seeder
      */
     public function run()
     {
-        // Truncate Users table
-        User::truncate();
-
         $password = Hash::make('gmradmin');
 
         User::create([

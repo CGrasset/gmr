@@ -3,10 +3,12 @@
 namespace App\Observers;
 
 use App\Job;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Config;
 
 class JobObserver
 {
-    private $expiration = Config::get('cache.expiration_time');
     /**
      * Handle the job "created" event.
      *
@@ -74,8 +76,16 @@ class JobObserver
         //
     }
 
+    // Add submitter id when creating Job
+    public function creating(Job $job)
+    {
+        $job->submitter_id = Auth::guard('api')->id();
+    }
+
     private function putCache(Job $job)
     {
-        Cache::tags('jobs')->put('jobs.'.$job->id, $job, $this->expiration);
+        // Save to cache
+        $expiration = Config::get('cache.expiration_time');
+        Cache::tags('jobs')->put('jobs.'.$job->id, $job, $expiration);
     }
 }
