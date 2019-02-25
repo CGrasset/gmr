@@ -44,6 +44,7 @@ COPY vessel.ini /etc/php/7.3/fpm/conf.d/99-vessel.ini
 EXPOSE 80
 
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# COPY laravel-worker.conf /etc/supervisor/conf.d/laravel-worker.conf
 COPY start-container /usr/local/bin/start-container
 RUN chmod +x /usr/local/bin/start-container
 

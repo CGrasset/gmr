@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Job;
+use App\Jobs\Processor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
@@ -16,6 +17,12 @@ class JobController extends Controller
         $job = Cache::tags('jobs')->rememberForever('jobs.nextAvailable', function (){
             return Job::nextAvailable();
         });
+
+        // Forget key if nothing available to serialize
+        if(empty($job->toArray())){
+            Cache::tags('jobs')->forget('jobs.nextAvailable');
+            return response()->json(null, 404);
+        }
 
         return $job;
     }
@@ -37,6 +44,7 @@ class JobController extends Controller
         $job = Job::create();
 
         // dispatch job!
+        Processor::dispatch($job);
 
         return response()->json($job, 201);
     }

@@ -18,6 +18,7 @@ class JobObserver
     public function created(Job $job)
     {
         // Save to cache after creating
+        $job->refresh();
         $this->putCache($job);
     }
 

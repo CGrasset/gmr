@@ -13,10 +13,20 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
+// Authentication
 Route::post('register', 'Auth\RegisterController@register');
-Route::post('login', 'Auth\LoginController@login');
+Route::post('login', [ 'as' => 'login', 'uses' => 'Auth\LoginController@login']);
 Route::post('logout', 'Auth\LoginController@logout');
+
+Route::group(['middleware' => 'auth:api'], function() {
+    // Logged in user's data
+    Route::get('user', function (Request $request) {
+        return response()->json(['data' => $request->user()->toArray(),]);
+    });
+
+    // Job routes
+    Route::get('job', 'JobController@index');
+    Route::get('job/{id}', 'JobController@show');
+    Route::post('job', 'JobController@store');
+    // Route::delete('job/{id}', 'JobController@delete');
+});
