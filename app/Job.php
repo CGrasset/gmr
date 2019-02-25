@@ -13,17 +13,26 @@ class Job extends Model
     {
         return $query->where('status', 'available')
                      ->orderBy('id', 'ASC')
-                     ->limit(1)
-                     ->get();
+                     ->limit(1);
+    }
+
+    public function scopeAvailable($query)
+    {
+        return $query->where('status', 'available');
+    }
+
+    public function scopeProcessed($query)
+    {
+        return $query->where('status', 'processed');
     }
 
     // Job execution
-    // Sleep between 5 and 20 secs
+    // Sleep between 10 and 30 secs
     public function execute()
     {
         $start_time = time();
         $this->processing();
-        sleep(rand(5,20));
+        sleep(rand(10,30));
         $this->finalize($start_time);
     }
 

@@ -20,6 +20,14 @@ class JobObserver
         // Save to cache after creating
         $job->refresh();
         $this->putCache($job);
+
+        // Increment queue processed value
+        if(Cache::tags('queue')->has('queue.size')){
+            Cache::tags('queue')->increment('queue.size', 1);
+        }else
+        {
+            Cache::tags('queue')->forever('queue.size', 1);
+        }
     }
 
     /**
@@ -34,12 +42,34 @@ class JobObserver
         $this->putCache($job);
 
         // Remove from nextAvailable cache if needed
-        if(Cache::tags('jobs')->has('nextAvailable') && $job->status != 'available')
+        if(Cache::tags('jobs')->has('jobs.nextAvailable') && $job->status != 'available')
         {
-            $nextJob = Cache::tags('jobs')->get('nextAvailable');
+            $nextJob = Cache::tags('jobs')->get('jobs.nextAvailable')[0];
             if($nextJob->id == $job->id)
             {
-                Cache::tags('jobs')->forget('nextAvailable');
+                Cache::tags('jobs')->forget('jobs.nextAvailable');
+            }
+        }
+
+        // Decrement queue size value
+        if($job->status == 'processing'){
+            if(Cache::tags('queue')->has('queue.size')){
+                Cache::tags('queue')->decrement('queue.size', 1);
+            }
+        }
+
+        // Increment queue processed value
+        if($job->status == 'processed'){
+            if(Cache::tags('queue')->has('queue.processed')){
+                $avg_time = Cache::tags('queue')->get('queue.avg_time');
+                $processed = Cache::tags('queue')->get('queue.processed');
+                $total_time = $avg_time * $processed;
+                $new_avg = ($total_time + $job->processing_time)/($processed+1);
+                Cache::tags('queue')->increment('queue.processed', 1);
+                Cache::tags('queue')->forever('queue.avg_time', $new_avg);
+            }else
+            {
+                Cache::tags('queue')->forever('queue.processed', 1);
             }
         }
     }
@@ -52,7 +82,22 @@ class JobObserver
      */
     public function deleted(Job $job)
     {
-        //
+        Cache::tags('jobs')->forget('jobs.'.$job->id);
+        if($job->status == 'available' && Cache::tags('queue')->has('queue.size')){
+            Cache::tags('queue')->decrement('queue.size', 1);
+        }
+    }
+
+    /**
+     * Handle the job "deleting" event.
+     *
+     * @param  \App\Job  $job
+     */
+    public function deleting(Job $job)
+    {
+        if($job->status == 'processing'){
+            return false;
+        }
     }
 
     /**

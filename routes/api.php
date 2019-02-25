@@ -28,5 +28,6 @@ Route::group(['middleware' => 'auth:api'], function() {
     Route::get('job', 'JobController@index');
     Route::get('job/{id}', 'JobController@show');
     Route::post('job', 'JobController@store');
-    // Route::delete('job/{id}', 'JobController@delete');
+    Route::delete('job/{id}', 'JobController@delete');
+    Route::get('queue', 'JobController@queue');
 });

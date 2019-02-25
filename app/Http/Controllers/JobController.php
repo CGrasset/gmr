@@ -15,7 +15,7 @@ class JobController extends Controller
     {
         // Get job from cache; set to cache if not found.
         $job = Cache::tags('jobs')->rememberForever('jobs.nextAvailable', function (){
-            return Job::nextAvailable();
+            return Job::nextAvailable()->get();
         });
 
         // Forget key if nothing available to serialize
@@ -49,14 +49,40 @@ class JobController extends Controller
         return response()->json($job, 201);
     }
 
-    // public function delete(Request $request, $id)
-    // {
-    //     $job = Job::findOrFail($id);
-    //     $job->delete();
-    //
-    //     // delete from cache
-    //     // TODO: DELETE IF NOT BEING PROCESSED!
-    //
-    //     return response()->json(null, 204);
-    // }
+    public function delete(Request $request, $id)
+    {
+        $job = Job::findOrFail($id);
+        $deleted = $job->delete();
+
+        if($deleted)
+        {
+            return response()->json(null, 204);
+        }else
+        {
+            return response()->json(["error" => 'Resource being processed. Unable to delete.'], 409);
+        }
+
+    }
+
+    // Queue overall status
+    public function queue()
+    {
+        $size = Cache::tags('queue')->rememberForever('queue.size', function (){
+            return Job::available()->count();
+        });
+        $processed = Cache::tags('queue')->rememberForever('queue.processed', function (){
+            return Job::processed()->count();
+        });
+        $avg_time = Cache::tags('queue')->rememberForever('queue.avg_time', function (){
+            return Job::processed()->avg('processing_time');
+        });
+
+        $queue = [
+            "size" => $size,
+            "processed" => $processed,
+            "avg_processing_time" => $avg_time
+        ];
+
+        return response()->json($queue);
+    }
 }
